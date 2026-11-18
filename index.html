@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f4ed">
+  <meta name="csrf-token" content="__CSRF_TOKEN__">
+  <title>Digital Business Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f5f4ed;
+      --surface: #fffefa;
+      --ink: #222c24;
+      --muted: #788078;
+      --line: #e7e8df;
+      --green: #315d43;
+      --green-dark: #244631;
+      --leaf: #eaf0e8;
+      --tomato: #b74937;
+      --tomato-pale: #f8eae5;
+      --gold: #e8b84d;
+      --shadow: 0 14px 40px rgba(36, 54, 39, .07);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.5 "DM Sans", sans-serif; }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .app { min-height: 100vh; }
+    .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 3; display: flex; width: 238px; flex-direction: column; padding: 27px 18px 20px; background: var(--green-dark); color: #f7f7ef; }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 0 8px 30px; }
+    .brand-mark { display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 12px; background: rgba(255,255,255,.1); font-size: 20px; }
+    .brand-name { font-size: 14px; font-weight: 700; letter-spacing: .1px; }
+    .brand-caption { margin-top: 1px; color: #bdc9bb; font-size: 11px; }
+    .nav-label { padding: 0 11px 9px; color: #a9b8a8; font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; }
+    .nav { display: grid; gap: 5px; }
+    .nav-button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 12px; border: 0; border-radius: 7px; background: transparent; color: #d5ded2; text-align: left; }
+    .nav-button:hover, .nav-button.active { background: rgba(255,255,255,.12); color: #fff; }
+    .nav-icon { width: 19px; text-align: center; font-size: 17px; }
+    .sidebar-bottom { margin-top: auto; padding: 16px 10px 0; border-top: 1px solid rgba(255,255,255,.16); color: #bdc9bb; font-size: 12px; }
+    .store-status { display: flex; align-items: center; gap: 8px; color: #f4f5eb; font-weight: 600; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #b6d582; }
+    .sidebar-bottom p { margin: 7px 0 0; font-size: 11px; }
+    .main { min-height: 100vh; margin-left: 238px; padding: 0 42px 50px; }
+    .topbar { display: flex; min-height: 78px; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+    .breadcrumb { color: var(--muted); font-size: 12px; }
+    .breadcrumb strong { color: var(--ink); font-weight: 600; }
+    .top-actions { display: flex; align-items: center; gap: 16px; }
+    .logout-form { display: none; margin: 0; }
+    body[data-php-auth="true"] .logout-form { display: block; }
+    .today { color: var(--muted); font-size: 12px; }
+    .avatar { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: #e6d4b7; color: #604b2c; font-size: 12px; font-weight: 700; }
+    .page { max-width: 1220px; margin: 0 auto; }
+    .page-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; padding: 30px 0 20px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 4px; font: 500 29px/1.2 Fraunces, Georgia, serif; letter-spacing: 0; }
+    .subheading { margin: 0; color: var(--muted); font-size: 13px; }
+    .button { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; gap: 8px; padding: 0 15px; border: 1px solid transparent; border-radius: 6px; background: var(--green); color: white; font-weight: 600; transition: background .15s, transform .15s; }
+    .button:hover { transform: translateY(-1px); background: var(--green-dark); }
+    .button.secondary { border-color: var(--line); background: var(--surface); color: var(--ink); }
+    .button.secondary:hover { background: #f3f4ed; }
+    .button.small { min-height: 34px; padding: 0 11px; font-size: 12px; }
+    .welcome { position: relative; display: flex; min-height: 158px; align-items: center; overflow: hidden; margin-bottom: 22px; padding: 25px 30px; border-radius: 8px; background: #dce8d4; }
+    .welcome::after { position: absolute; inset: 0 0 0 auto; width: 44%; background: linear-gradient(90deg, #dce8d4 0%, rgba(220,232,212,.25) 34%, transparent 80%), url("https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1000&q=80") center 48%/cover; content: ""; }
+    .welcome-copy { position: relative; z-index: 1; max-width: 470px; }
+    .eyebrow { margin-bottom: 7px; color: var(--green); font-size: 10px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; }
+    .welcome h2 { max-width: 390px; margin-bottom: 5px; font: 500 23px/1.25 Fraunces, Georgia, serif; }
+    .welcome p { margin: 0; color: #5b6a5d; font-size: 12px; }
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; margin-bottom: 23px; }
+    .stat { min-height: 112px; padding: 16px 17px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); }
+    .stat-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 11px; }
+    .stat-icon { display: grid; width: 27px; height: 27px; place-items: center; border-radius: 7px; background: var(--leaf); font-size: 14px; }
+    .stat-value { margin-top: 10px; font-size: 23px; font-weight: 700; line-height: 1.1; letter-spacing: 0; }
+    .stat-note { margin-top: 4px; color: var(--muted); font-size: 10px; }
+    .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(260px, .85fr); gap: 16px; }
+    .panel { min-width: 0; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); }
+    .panel-head { display: flex; min-height: 60px; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 17px; border-bottom: 1px solid var(--line); }
+    .panel-head h2 { margin: 0; font-size: 14px; font-weight: 700; }
+    .text-button { padding: 4px 0; border: 0; background: none; color: var(--green); font-size: 11px; font-weight: 700; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+    th { padding: 10px 15px; background: #fafaf6; color: #858a80; font-size: 10px; font-weight: 600; }
+    td { padding: 12px 15px; border-top: 1px solid #eff0e9; font-size: 12px; }
+    .product-cell { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+    .product-emoji { display: grid; width: 31px; height: 31px; flex: 0 0 31px; place-items: center; border-radius: 7px; background: #f1f2e9; font-size: 17px; }
+    .product-meta { color: var(--muted); font-size: 10px; font-weight: 400; }
+    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 99px; background: var(--leaf); color: var(--green); font-size: 10px; font-weight: 600; }
+    .badge.low { background: var(--tomato-pale); color: var(--tomato); }
+    .stock-cell { font-weight: 600; }
+    .activity-list { padding: 4px 17px 10px; }
+    .activity { display: flex; align-items: flex-start; gap: 11px; padding: 12px 0; border-bottom: 1px solid #eff0e9; }
+    .activity:last-child { border-bottom: 0; }
+    .activity-icon { display: grid; width: 31px; height: 31px; flex: 0 0 31px; place-items: center; border-radius: 50%; background: var(--leaf); font-size: 14px; }
+    .activity-main { flex: 1; min-width: 0; }
+    .activity-title { font-size: 11px; font-weight: 600; }
+    .activity-time { margin-top: 2px; color: var(--muted); font-size: 10px; }
+    .activity-amount { padding-top: 1px; font-size: 11px; font-weight: 700; }
+    .empty { padding: 24px 16px; color: var(--muted); font-size: 12px; text-align: center; }
+    .weekly-summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px; }
+    .weekly-total-label { color: var(--muted); font-size: 11px; }
+    .weekly-total { margin-top: 2px; font-size: 21px; font-weight: 700; }
+    .weekly-count { color: var(--muted); font-size: 11px; text-align: right; }
+    .weekly-chart { display: grid; gap: 12px; padding: 17px 18px 20px; border-top: 1px solid var(--line); }
+    .weekly-row { display: grid; grid-template-columns: 76px minmax(40px, 1fr) minmax(88px, auto); align-items: center; gap: 12px; }
+    .weekly-day { color: var(--muted); font-size: 11px; }
+    .weekly-day.is-today { color: var(--green-dark); font-weight: 700; }
+    .weekly-track { height: 10px; overflow: hidden; border-radius: 99px; background: #f0f1eb; }
+    .weekly-bar { height: 100%; border-radius: inherit; background: #8eaa8f; }
+    .weekly-bar.is-today { background: var(--green); }
+    .weekly-amount { font-size: 11px; font-weight: 600; text-align: right; }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-bottom: 14px; }
+    .search-wrap { position: relative; flex: 1 1 230px; }
+    .search-wrap span { position: absolute; top: 9px; left: 11px; color: var(--muted); }
+    .search-wrap input { padding-left: 33px; }
+    input, select { width: 100%; min-height: 39px; padding: 0 11px; border: 1px solid #dfe2d8; border-radius: 5px; outline: none; background: var(--surface); color: var(--ink); }
+    input:focus, select:focus { border-color: #71917a; box-shadow: 0 0 0 3px rgba(49,93,67,.1); }
+    .filter-select { width: auto; min-width: 140px; }
+    .inventory-panel { overflow: hidden; }
+    .inventory-table th, .inventory-table td { padding-right: 17px; padding-left: 17px; }
+    .row-actions { display: flex; gap: 7px; }
+    .icon-button { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid var(--line); border-radius: 5px; background: white; color: var(--green); font-size: 15px; }
+    .icon-button:hover { background: var(--leaf); }
+    .icon-button.danger { color: var(--tomato); }
+    .icon-button.danger:hover { background: var(--tomato-pale); }
+    .sale-table td:last-child, .sale-table th:last-child { text-align: right; }
+    .sale-total { font-weight: 700; }
+    .dialog { width: min(440px, calc(100% - 28px)); padding: 0; border: 0; border-radius: 9px; box-shadow: 0 24px 80px rgba(20,35,24,.25); }
+    #sale-dialog { width: min(520px, calc(100% - 28px)); }
+    .dialog::backdrop { background: rgba(27,37,29,.48); backdrop-filter: blur(2px); }
+    .receipt-dialog { width: min(390px, calc(100% - 28px)); }
+    .receipt-paper { padding: 24px; color: #222; font: 13px/1.5 "DM Sans", sans-serif; }
+    .receipt-heading { padding-bottom: 14px; border-bottom: 1px dashed #a9aaa2; text-align: center; }
+    .receipt-heading h2 { margin: 0; font: 600 22px Fraunces, Georgia, serif; overflow-wrap: anywhere; }
+    .receipt-heading p { margin: 3px 0 0; color: #666; }
+    .receipt-meta { display: grid; gap: 3px; margin: 14px 0; font-size: 11px; }
+    .receipt-meta strong { font-weight: 700; }
+    .receipt-items { width: 100%; margin: 12px 0; border-collapse: collapse; white-space: normal; }
+    .receipt-items th, .receipt-items td { padding: 7px 0; border-bottom: 1px solid #e5e5e0; background: transparent; color: #222; font-size: 11px; }
+    .receipt-items th:last-child, .receipt-items td:last-child { text-align: right; }
+    .receipt-total { display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px dashed #a9aaa2; font-size: 15px; font-weight: 700; }
+    .receipt-thanks { margin: 18px 0 0; color: #555; text-align: center; }
+    @media print {
+      body * { visibility: hidden !important; }
+      #receipt-dialog[open], #receipt-dialog[open] * { visibility: visible !important; }
+      #receipt-dialog[open] { position: fixed; inset: 0 auto auto 0; width: 80mm; max-width: 100%; max-height: none; margin: 0; overflow: visible; border: 0; border-radius: 0; box-shadow: none; }
+      #receipt-dialog::backdrop, .receipt-actions { display: none; }
+      .receipt-paper { padding: 8mm; }
+    }
+    .dialog-inner { padding: 23px; }
+    .dialog-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
+    .dialog-head h2 { margin: 0 0 3px; font: 500 22px Fraunces, Georgia, serif; }
+    .dialog-head p { margin: 0; color: var(--muted); font-size: 11px; }
+    .close-button { width: 30px; height: 30px; border: 0; border-radius: 5px; background: #f1f2ec; color: var(--ink); font-size: 19px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field { display: grid; gap: 5px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { color: #596259; font-size: 11px; font-weight: 600; }
+    .sale-item-list { display: grid; gap: 10px; }
+    .sale-item-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 6px; background: #fafaf6; }
+    .sale-item-row .field:first-child, .sale-item-row .field:last-child { grid-column: 1 / -1; }
+    .sale-items-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .sale-items-heading strong { font-size: 12px; }
+    .sale-line-remove { justify-self: end; min-height: 30px; padding: 0 9px; border: 1px solid var(--line); border-radius: 5px; background: white; color: var(--tomato); font-size: 11px; }
+    .sale-total-preview { display: flex; justify-content: space-between; padding: 11px; border-radius: 5px; background: var(--leaf); font-weight: 700; }
+    .quantity-presets { display: flex; gap: 6px; margin-top: 2px; }
+    .quantity-presets[hidden] { display: none; }
+    .quantity-preset { min-height: 30px; flex: 1; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); color: var(--green); font-size: 11px; font-weight: 700; }
+    .quantity-preset:hover:not(:disabled), .quantity-preset[aria-pressed="true"] { border-color: var(--green); background: var(--leaf); }
+    .quantity-preset:disabled { cursor: not-allowed; opacity: .45; }
+    .form-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+    .toast { position: fixed; right: 24px; bottom: 24px; z-index: 6; padding: 12px 16px; border-radius: 6px; background: var(--green-dark); color: white; box-shadow: var(--shadow); font-size: 12px; animation: appear .2s ease-out; }
+    @keyframes appear { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 1050px) { .main { padding-right: 24px; padding-left: 24px; } .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .dashboard-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 700px) {
+      .sidebar { position: fixed; inset: auto 0 0; width: auto; height: 62px; flex-direction: row; padding: 5px 8px; box-shadow: 0 -5px 20px rgba(25,40,26,.12); }
+      .brand, .nav-label, .sidebar-bottom { display: none; }
+      .nav { width: 100%; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+      .nav-button { min-height: 50px; flex-direction: column; justify-content: center; gap: 1px; padding: 3px; font-size: 10px; text-align: center; }
+      .nav-icon { font-size: 16px; }
+      .main { margin-left: 0; padding: 0 15px 83px; }
+      .topbar { min-height: 60px; }
+      .today { display: none; }
+      .page-heading { align-items: center; padding-top: 22px; }
+      h1 { font-size: 25px; }
+      .welcome { min-height: 138px; padding: 19px; }
+      .welcome::after { width: 48%; opacity: .65; }
+      .welcome-copy { max-width: 67%; }
+      .welcome h2 { font-size: 20px; }
+      .welcome p { max-width: 210px; font-size: 11px; }
+      .stat { min-height: 101px; padding: 13px; }
+      .stat-value { font-size: 20px; }
+      .stats { gap: 9px; }
+      .weekly-summary, .weekly-chart { padding-right: 13px; padding-left: 13px; }
+      .weekly-row { grid-template-columns: 68px minmax(30px, 1fr) minmax(78px, auto); gap: 8px; }
+      .weekly-amount { font-size: 10px; }
+      .panel-head { padding-right: 13px; padding-left: 13px; }
+      .inventory-table th, .inventory-table td { padding-right: 12px; padding-left: 12px; }
+      .sale-item-row { grid-template-columns: 1fr; }
+      .sale-item-row .field { grid-column: auto !important; }
+    }
+    @media (max-width: 390px) { .page-heading .button { min-height: 36px; padding: 0 9px; font-size: 11px; } .page-heading { gap: 6px; } .avatar { width: 31px; height: 31px; } .form-grid { grid-template-columns: 1fr; } .field.full { grid-column: auto; } }
+  </style>
+</head>
+<body data-php-auth="__AUTHENTICATED__">
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark">🌿</div><div><div class="brand-name">Digital Business Manager</div><div class="brand-caption">Produce store desk</div></div></div>
+      <div class="nav-label">Workspace</div>
+      <nav class="nav" aria-label="Main navigation">
+        <button class="nav-button active" data-view="dashboard"><span class="nav-icon">⌂</span>Overview</button>
+        <button class="nav-button" data-view="inventory"><span class="nav-icon">▤</span>Inventory</button>
+        <button class="nav-button" data-view="sales"><span class="nav-icon">↗</span>Daily sales</button>
+      </nav>
+      <div class="sidebar-bottom"><div class="store-status"><span class="status-dot"></span>Store is open</div><p>Stock and sales are saved on this device.</p></div>
+    </aside>
+    <main class="main">
+      <header class="topbar"><div class="breadcrumb">Digital Business Manager <span aria-hidden="true"> / </span> <strong id="breadcrumb-current">Overview</strong></div><div class="top-actions"><span class="today" id="today-label"></span><div class="avatar" aria-label="Store manager">KM</div><form class="logout-form" method="post" action="index.php"><input type="hidden" name="action" value="logout"><input type="hidden" name="csrf_token" value="__CSRF_TOKEN__"><button class="text-button" type="submit">Sign out</button></form></div></header>
+      <div class="page" id="page-content"></div>
+    </main>
+  </div>
+  <dialog class="dialog" id="product-dialog">
+    <form id="product-form" class="dialog-inner">
+      <div class="dialog-head"><div><h2>Add produce</h2><p>Enter the details for a new stock item.</p></div><button class="close-button" type="button" data-close="product-dialog" aria-label="Close">×</button></div>
+      <div class="form-grid">
+        <div class="field full"><label for="product-name">Produce name</label><input id="product-name" name="name" placeholder="e.g. Sweet potatoes" required></div>
+        <div class="field"><label for="product-category">Category</label><select id="product-category" name="category"><option>Vegetables</option><option>Fruits</option><option>Staples</option><option>Other</option></select></div>
+        <div class="field"><label for="product-unit">Unit</label><select id="product-unit" name="unit"><option value="kg">Kilogram (kg)</option><option value="bunch">Bunch</option><option value="piece">Piece</option><option value="sack">Sack</option><option value="crate">Crate</option></select></div>
+        <div class="field"><label for="product-stock">Opening stock</label><input id="product-stock" name="stock" type="number" min="0" step="0.1" placeholder="0" required></div>
+        <div class="field"><label for="product-minimum">Low-stock at</label><input id="product-minimum" name="minimum" type="number" min="0" step="0.1" value="5" required></div>
+        <div class="field"><label for="product-cost">Cost price (UGX)</label><input id="product-cost" name="cost" type="number" min="0" step="100" placeholder="0" required></div>
+        <div class="field"><label for="product-price">Selling price (UGX)</label><input id="product-price" name="price" type="number" min="0" step="100" placeholder="0" required></div>
+      </div>
+      <div class="form-footer"><button class="button secondary" type="button" data-close="product-dialog">Cancel</button><button class="button" type="submit">Add to inventory</button></div>
+    </form>
+  </dialog>
+  <dialog class="dialog" id="sale-dialog">
+    <form id="sale-form" class="dialog-inner">
+      <div class="dialog-head"><div><h2>Record a sale</h2><p>Sold quantities are deducted from stock.</p></div><button class="close-button" type="button" data-close="sale-dialog" aria-label="Close">×</button></div>
+      <div class="form-grid">
+        <div class="field full"><label for="sale-customer">Person involved</label><input id="sale-customer" name="customerName" type="text" maxlength="80" placeholder="Enter the person or customer name"></div>
+        <div class="field"><label for="sale-type">Sales type</label><select id="sale-type" name="saleType"><option value="Debit">Debit sale</option><option value="Credit">Credit sale</option><option value="Cash">Cash sale</option></select></div>
+        <div class="field full"><div class="sale-items-heading"><strong>Products</strong><button class="button secondary small" type="button" id="add-sale-item">＋ Add another product</button></div><div class="sale-item-list" id="sale-items"></div></div>
+        <div class="field full"><div class="sale-total-preview"><span>Sale total</span><span id="sale-total-preview">UGX 0</span></div></div>
+        <div class="field full"><label for="sale-cash-paid">Cash paid (UGX)</label><input id="sale-cash-paid" name="cashPaid" type="number" min="0" step="1" value="0" required><div class="product-meta">For credit sales, enter any amount paid now. The remaining balance will appear on the receipt.</div></div>
+      </div>
+      <div class="form-footer"><button class="button secondary" type="button" data-close="sale-dialog">Cancel</button><button class="button" type="submit">Save sale</button></div>
+    </form>
+  </dialog>
+  <dialog class="dialog" id="sale-date-dialog">
+    <form id="sale-date-form" class="dialog-inner">
+      <div class="dialog-head"><div><h2 id="sale-date-title">Correct sale date</h2><p id="sale-date-description">Enter the manager PIN to change this sale date.</p></div><button class="close-button" type="button" data-close="sale-date-dialog" aria-label="Close">×</button></div>
+      <div class="form-grid">
+        <div class="field full"><label for="sale-corrected-date">Correct date</label><input id="sale-corrected-date" name="date" type="date" required></div>
+        <div class="field full"><label for="manager-pin">Manager PIN</label><input id="manager-pin" name="pin" type="password" inputmode="numeric" autocomplete="new-password" minlength="4" maxlength="12" placeholder="Enter PIN (4–12 characters)" required></div>
+        <div class="field full" id="manager-pin-confirm-field" hidden><label for="manager-pin-confirm">Confirm manager PIN</label><input id="manager-pin-confirm" name="pinConfirm" type="password" inputmode="numeric" autocomplete="new-password" minlength="4" maxlength="12" placeholder="Enter the PIN again"></div>
+      </div>
+      <div class="form-footer"><button class="button secondary" type="button" data-close="sale-date-dialog">Cancel</button><button class="button" id="sale-date-submit" type="submit">Save correction</button></div>
+    </form>
+  </dialog>
+  <dialog class="dialog receipt-dialog" id="receipt-dialog" aria-labelledby="receipt-business-name">
+    <div class="receipt-paper" id="receipt-content"></div>
+    <div class="form-footer receipt-actions" style="padding: 0 23px 23px">
+      <button class="button secondary" type="button" data-close="receipt-dialog">Close</button>
+      <button class="button" type="button" id="print-receipt">Print receipt</button>
+    </div>
+  </dialog>
+  <script>
+    const starterProducts = [
+      { id: "p1", name: "super 1", category: "Other", unit: "piece", stock: 0, minimum: 5, cost: 0, price: 0, emoji: "📦" },
+      { id: "p2", name: "super2", category: "Other", unit: "piece", stock: 0, minimum: 5, cost: 0, price: 0, emoji: "📦" },
+      { id: "p3", name: "s.kaiso", category: "Other", unit: "piece", stock: 0, minimum: 5, cost: 0, price: 0, emoji: "📦" },
+      { id: "p4", name: "soya", category: "Staples", unit: "kg", stock: 0, minimum: 5, cost: 0, price: 0, emoji: "🫘" },
+      { id: "p5", name: "maize flour", category: "Staples", unit: "kg", stock: 0, minimum: 5, cost: 0, price: 0, emoji: "🌾" },
+      { id: "p6", name: "millet flour", category: "Staples", unit: "kg", stock: 0, minimum: 5, cost: 0, price: 0, emoji: "🌾" },
+      { id: "p7", name: "rice flour", category: "Staples", unit: "kg", stock: 0, minimum: 5, cost: 0, price: 0, emoji: "🌾" }
+    ];
+    const load = (key, fallback) => { try { const value = JSON.parse(localStorage.getItem(key)); return value ?? fallback; } catch { return fallback; } };
+    let products = load("kyobe-products", starterProducts);
+    let sales = load("kyobe-sales", []).map(sale => ({ ...sale, saleType: sale.saleType || "Debit", customerName: sale.customerName || "Walk-in" }));
+    let businessName = load("kyobe-business-name", "Kyobe General Stores") || "Kyobe General Stores";
+    const legacyNames = ["Matooke", "Tomatoes", "Red onions", "Beans", "Avocado", "Sweet potatoes"];
+    if (!sales.length && products.length === legacyNames.length && products.every((item, index) => item.id === `p${index + 1}` && item.name === legacyNames[index])) {
+      products = starterProducts;
+      localStorage.setItem("kyobe-products", JSON.stringify(products));
+    }
+    let currentView = "dashboard";
+    const PIECE_WEIGHT_KG = 50;
+    let salePaymentEdited = false;
+    let searchTerm = "";
+    let categoryFilter = "All categories";
+    const serverApiAvailable = location.protocol === "http:" || location.protocol === "https:";
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+    const localDateKey = value => { const date = new Date(value); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; };
+    let selectedSalesDate = localDateKey(new Date());
+    const page = document.getElementById("page-content");
+    const money = value => `UGX ${Number(value || 0).toLocaleString("en-UG")}`;
+    const number = value => Number(value).toLocaleString("en-UG", { maximumFractionDigits: 2 });
+    async function save() {
+      localStorage.setItem("kyobe-products", JSON.stringify(products));
+      localStorage.setItem("kyobe-sales", JSON.stringify(sales));
+      if (!serverApiAvailable) return true;
+      try {
+        const response = await fetch("index.php?api=store", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
+          body: JSON.stringify({ products, sales, businessName })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "The server could not save your data.");
+        return true;
+      } catch (error) {
+        console.error("Server save failed:", error);
+        return false;
+      }
+    }
+    async function saveWithNotice(message) {
+      const savedOnServer = await save();
+      notify(serverApiAvailable && !savedOnServer
+        ? "Saved on this device, but server sync failed. Check the connection and sign in again."
+        : message);
+      return savedOnServer;
+    }
+    async function managerPinHash(pin, salt) {
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${salt}:${pin}`));
+      return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+    }
+    const dateLabel = date => new Date(date).toLocaleDateString("en-UG", { day: "numeric", month: "short", year: "numeric" });
+    const timeLabel = date => new Date(date).toLocaleTimeString("en-UG", { hour: "numeric", minute: "2-digit" });
+    const lowStock = item => Number(item.stock) <= Number(item.minimum);
+    function heading(title, subtitle, action = "") { return `<div class="page-heading"><div><h1>${title}</h1><p class="subheading">${subtitle}</p></div>${action}</div>`; }
+    function csvCell(value) {
+      let text = String(value ?? "");
+      if (/^[=+\-@]/.test(text)) text = `'${text}`;
+      return `"${text.replace(/"/g, '""')}"`;
+    }
+    function downloadCsv(filename, headers, rows) {
+      const csv = [
+        headers.map(csvCell).join(","),
+        ...rows.map(row => row.map(csvCell).join(","))
+      ].join("\r\n");
+      const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+    function exportInventory() {
+      const headers = ["Produce", "Category", "Available", "Unit", "Restock At", "Cost Price", "Selling Price", "Status"];
+      const rows = products.map(item => [
+        item.name,
+        item.category,
+        Number(item.stock),
+        item.unit,
+        Number(item.minimum),
+        Number(item.cost),
+        Number(item.price),
+        lowStock(item) ? "Low stock" : "In stock"
+      ]);
+      downloadCsv(`inventory-${localDateKey(new Date())}.csv`, headers, rows);
+      notify("Inventory exported for Excel.");
+    }
+    function exportSales() {
+      const dailySales = sales
+        .filter(sale => localDateKey(sale.date) === selectedSalesDate)
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+      const headers = ["Date", "Time", "Produce", "Person", "Type", "Quantity", "Unit", "Unit Price", "Total", "Cash Paid", "Balance"];
+      const rows = dailySales.map(sale => {
+        const total = Number(sale.total);
+        const cashPaid = Number(sale.cashPaid || 0);
+        return [
+          localDateKey(sale.date),
+          timeLabel(sale.date),
+          sale.productName,
+          sale.customerName || "Walk-in",
+          sale.saleType || "Debit",
+          Number(sale.quantity),
+          sale.unit,
+          Number(sale.price),
+          total,
+          cashPaid,
+          Math.max(0, total - cashPaid)
+        ];
+      });
+      downloadCsv(`sales-${selectedSalesDate}.csv`, headers, rows);
+      notify("Selected-day sales exported for Excel.");
+    }
+    function stockBadge(item) { return lowStock(item) ? '<span class="badge low">● Low stock</span>' : '<span class="badge">● In stock</span>'; }
+    function productRows(items, compact = false) {
+      if (!items.length) return `<tr><td colspan="${compact ? 4 : 6}" class="empty">No produce found. Add an item to get started.</td></tr>`;
+      return items.map(item => `<tr><td><div class="product-cell"><span class="product-emoji">${item.emoji || "🥬"}</span><span>${escapeHtml(item.name)}<span class="product-meta" style="display:block">${escapeHtml(item.category)}</span></span></div></td><td class="stock-cell">${number(item.stock)} <span style="color:var(--muted);font-weight:400">${escapeHtml(item.unit)}</span></td>${compact ? `<td>${stockBadge(item)}</td><td>${money(item.price)}</td>` : `<td>${number(item.minimum)} ${escapeHtml(item.unit)}</td><td>${money(item.price)}</td><td>${stockBadge(item)}</td><td><div class="row-actions"><button class="icon-button" data-restock="${item.id}" title="Restock ${escapeHtml(item.name)}" aria-label="Restock ${escapeHtml(item.name)}">＋</button><button class="icon-button" data-sell="${item.id}" title="Record sale of ${escapeHtml(item.name)}" aria-label="Record sale of ${escapeHtml(item.name)}">↗</button></div></td>`}</tr>`).join("");
+    }
+    function activityMarkup(limit = 5) {
+      const recent = [...sales].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, limit);
+      if (!recent.length) return '<div class="empty">No sales recorded yet. Your activity will appear here.</div>';
+      return recent.map(sale => `<div class="activity"><div class="activity-icon">↗</div><div class="activity-main"><div class="activity-title">${escapeHtml(sale.productName)} · ${number(sale.quantity)} ${escapeHtml(sale.unit)}</div><div class="activity-time">${escapeHtml(sale.saleType || "Debit")} · ${escapeHtml(sale.customerName || "Walk-in")} · ${dateLabel(sale.date)} at ${timeLabel(sale.date)}</div></div><div class="activity-amount">${money(sale.total)}</div></div>`).join("");
+    }
+    function dashboard() {
+      const todaySales = sales.filter(sale => new Date(sale.date).toDateString() === new Date().toDateString());
+      const todayTotal = todaySales.reduce((sum, sale) => sum + Number(sale.total), 0);
+      const weekStart = new Date();
+      weekStart.setHours(0, 0, 0, 0);
+      weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+      const weeklyDays = Array.from({ length: 7 }, (_, index) => {
+        const date = new Date(weekStart);
+        date.setDate(weekStart.getDate() + index);
+        const dateKey = localDateKey(date);
+        const daySales = sales.filter(sale => localDateKey(sale.date) === dateKey);
+        return {
+          date,
+          dateKey,
+          isToday: dateKey === localDateKey(new Date()),
+          total: daySales.reduce((sum, sale) => sum + Number(sale.total), 0),
+          count: daySales.length
+        };
+      });
+      const weeklyTotal = weeklyDays.reduce((sum, day) => sum + day.total, 0);
+      const weeklySaleCount = weeklyDays.reduce((sum, day) => sum + day.count, 0);
+      const maxDailyTotal = Math.max(1, ...weeklyDays.map(day => day.total));
+      const stockValue = products.reduce((sum, item) => sum + Number(item.stock) * Number(item.cost), 0);
+      const lowCount = products.filter(lowStock).length;
+      const recentProducts = [...products].sort((a, b) => Number(a.stock) - Number(b.stock)).slice(0, 4);
+      const weeklyChart = weeklyDays.map(day => {
+        const label = day.date.toLocaleDateString("en-UG", { weekday: "short", day: "numeric" });
+        const width = day.total ? Math.max(2, day.total / maxDailyTotal * 100) : 0;
+        return `<div class="weekly-row"><div class="weekly-day${day.isToday ? " is-today" : ""}">${label}${day.isToday ? " · today" : ""}</div><div class="weekly-track" role="img" aria-label="${escapeAttr(`${label}: ${money(day.total)}`)}"><div class="weekly-bar${day.isToday ? " is-today" : ""}" style="width:${width}%"></div></div><div class="weekly-amount">${money(day.total)}</div></div>`;
+      }).join("");
+      return `${heading("Good morning, manager", "Here’s what’s happening at your store today.", '<button class="button" data-open="sale-dialog">＋ Record sale</button>')}<section class="welcome"><div class="welcome-copy"><div class="eyebrow">Your store, at a glance</div><h2>Fresh produce. A clearer picture.</h2><p>Keep stock moving and your shelves ready for the neighbourhood.</p></div></section><section class="stats" aria-label="Store summary"><div class="stat"><div class="stat-top">Today’s sales <span class="stat-icon">↗</span></div><div class="stat-value">${money(todayTotal)}</div><div class="stat-note">${todaySales.length} sale${todaySales.length === 1 ? "" : "s"} recorded today</div></div><div class="stat"><div class="stat-top">Products in stock <span class="stat-icon">🥬</span></div><div class="stat-value">${products.length}</div><div class="stat-note">Different produce items</div></div><div class="stat"><div class="stat-top">Needs restocking <span class="stat-icon">⚑</span></div><div class="stat-value">${lowCount}</div><div class="stat-note">At or below minimum level</div></div><div class="stat"><div class="stat-top">Stock cost value <span class="stat-icon">◉</span></div><div class="stat-value" style="font-size:19px">${money(stockValue)}</div><div class="stat-note">Based on current quantities</div></div></section><section class="panel weekly-panel" aria-labelledby="weekly-performance-title"><div class="panel-head"><h2 id="weekly-performance-title">Weekly performance</h2><span class="subheading">Monday – Sunday</span></div><div class="weekly-summary"><div><div class="weekly-total-label">Revenue this week</div><div class="weekly-total">${money(weeklyTotal)}</div></div><div class="weekly-count">${weeklySaleCount} sale${weeklySaleCount === 1 ? "" : "s"} recorded</div></div><div class="weekly-chart" aria-label="Daily revenue this week">${weeklyChart}</div></section><section class="dashboard-grid"><div class="panel"><div class="panel-head"><h2>Stock to keep an eye on</h2><button class="text-button" data-go="inventory">View inventory →</button></div><div class="table-wrap"><table><thead><tr><th>Produce</th><th>Available</th><th>Status</th><th>Sell price</th></tr></thead><tbody>${productRows(recentProducts, true)}</tbody></table></div></div><div class="panel"><div class="panel-head"><h2>Recent sales</h2><button class="text-button" data-go="sales">All sales →</button></div><div class="activity-list">${activityMarkup(4)}</div></div></section>`;
+    }
+    function inventory() {
+      const categories = ["All categories", ...new Set(products.map(item => item.category))];
+      const filtered = products.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()) && (categoryFilter === "All categories" || item.category === categoryFilter));
+      return `${heading("Inventory", `${products.length} produce items in your store.`, '<div style="display:flex;gap:8px"><button class="button secondary" data-export="inventory">⇩ Export for Excel</button><button class="button" data-open="product-dialog">＋ Add produce</button></div>')}<div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="inventory-search" type="search" placeholder="Search produce…" value="${escapeAttr(searchTerm)}" aria-label="Search inventory"></div><select class="filter-select" id="category-filter" aria-label="Filter by category">${categories.map(category => `<option${category === categoryFilter ? " selected" : ""}>${escapeHtml(category)}</option>`).join("")}</select><button class="button secondary small" data-open="sale-dialog">↗ Record sale</button></div><div class="panel inventory-panel"><div class="table-wrap"><table class="inventory-table"><thead><tr><th>Produce</th><th>Available</th><th>Restock at</th><th>Sell price</th><th>Status</th><th>Actions</th></tr></thead><tbody>${productRows(filtered)}</tbody></table></div></div>`;
+    }
+    function salesView() {
+      const dailySales = sales.filter(sale => localDateKey(sale.date) === selectedSalesDate).sort((a, b) => new Date(b.date) - new Date(a.date));
+      const dailyTotal = dailySales.reduce((sum, sale) => sum + Number(sale.total), 0);
+      const creditSales = dailySales.filter(sale => (sale.saleType || "Debit") === "Credit");
+      const debitSales = dailySales.filter(sale => (sale.saleType || "Debit") === "Debit");
+      const cashSales = dailySales.filter(sale => sale.saleType === "Cash");
+      const creditTotal = creditSales.reduce((sum, sale) => sum + Number(sale.total), 0);
+      const debitTotal = debitSales.reduce((sum, sale) => sum + Number(sale.total), 0);
+      const cashTotal = cashSales.reduce((sum, sale) => sum + Number(sale.total), 0);
+      const displayDate = dateLabel(`${selectedSalesDate}T12:00:00`);
+      return `${heading("Daily sales", `Sales recorded for ${displayDate}.`, '<div style="display:flex;gap:8px"><button class="button secondary" data-export="sales">⇩ Export for Excel</button><button class="button" data-open="sale-dialog">＋ Record sale</button></div>')}<div class="toolbar"><label class="field" for="sales-date" style="min-width:190px"><span class="subheading">Select sales date</span><input id="sales-date" type="date" value="${selectedSalesDate}"></label><button class="button secondary small" data-today-sales>Today</button><label class="field" for="business-name" style="min-width:220px;flex:1 1 240px"><span class="subheading">Business name on receipts</span><input id="business-name" type="text" maxlength="100" placeholder="Enter your business name" value="${escapeAttr(businessName)}"></label></div><section class="stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));max-width:1020px"><div class="stat"><div class="stat-top">Sales revenue <span class="stat-icon">◉</span></div><div class="stat-value" style="font-size:19px">${money(dailyTotal)}</div><div class="stat-note">For ${displayDate}</div></div><div class="stat"><div class="stat-top">Credit sales <span class="stat-icon">◔</span></div><div class="stat-value" style="font-size:19px">${money(creditTotal)}</div><div class="stat-note">${creditSales.length} credit sale${creditSales.length === 1 ? "" : "s"}</div></div><div class="stat"><div class="stat-top">Debit sales <span class="stat-icon">◑</span></div><div class="stat-value" style="font-size:19px">${money(debitTotal)}</div><div class="stat-note">${debitSales.length} debit sale${debitSales.length === 1 ? "" : "s"}</div></div><div class="stat"><div class="stat-top">Cash sales <span class="stat-icon">◉</span></div><div class="stat-value" style="font-size:19px">${money(cashTotal)}</div><div class="stat-note">${cashSales.length} cash sale${cashSales.length === 1 ? "" : "s"}</div></div><div class="stat"><div class="stat-top">Transactions <span class="stat-icon">↗</span></div><div class="stat-value">${dailySales.length}</div><div class="stat-note">Sales recorded that day</div></div></section><div class="panel inventory-panel"><div class="panel-head"><h2>Transactions</h2><span class="subheading">${dailySales.length} sale${dailySales.length === 1 ? "" : "s"}</span></div><div class="table-wrap"><table class="sale-table"><thead><tr><th>Produce</th><th>Person</th><th>Type</th><th>Quantity</th><th>Time</th><th>Unit price</th><th>Total</th><th>Actions</th></tr></thead><tbody>${dailySales.length ? dailySales.map(sale => `<tr><td><div class="product-cell"><span class="product-emoji">${sale.emoji || "🥬"}</span>${escapeHtml(sale.productName)}</div></td><td>${escapeHtml(sale.customerName || "Walk-in")}</td><td><span class="badge${(sale.saleType || "Debit") === "Credit" ? "" : " low"}">${escapeHtml(sale.saleType || "Debit")}</span></td><td>${number(sale.quantity)} ${escapeHtml(sale.unit)}</td><td>${timeLabel(sale.date)}</td><td>${money(sale.price)}</td><td class="sale-total">${money(sale.total)}</td><td><div class="row-actions"><button class="icon-button" data-receipt="${escapeAttr(sale.id)}" title="Print customer receipt" aria-label="Print receipt for ${escapeHtml(sale.customerName || "Walk-in")}">▤</button><button class="icon-button" data-edit-sale="${escapeAttr(sale.id)}" title="Correct sale date" aria-label="Correct date for sale of ${escapeHtml(sale.productName)}">✎</button><button class="icon-button danger" data-delete-sale="${escapeAttr(sale.id)}" title="Delete this sale" aria-label="Delete sale of ${escapeHtml(sale.productName)}">×</button></div></td></tr>`).join("") : '<tr><td colspan="8" class="empty">No sales recorded for this date.</td></tr>'}</tbody></table></div></div>`;
+    }
+    function escapeHtml(value) { return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]); }
+    function escapeAttr(value) { return escapeHtml(value); }
+    function render() {
+      page.innerHTML = currentView === "inventory" ? inventory() : currentView === "sales" ? salesView() : dashboard();
+      document.getElementById("breadcrumb-current").textContent = currentView === "sales" ? "Daily sales" : currentView === "inventory" ? "Inventory" : "Overview";
+      document.querySelectorAll(".nav-button").forEach(button => button.classList.toggle("active", button.dataset.view === currentView));
+      const search = document.getElementById("inventory-search");
+      if (search) search.addEventListener("input", event => { searchTerm = event.target.value; const position = event.target.selectionStart; render(); const next = document.getElementById("inventory-search"); next.focus(); next.setSelectionRange(position, position); });
+      const category = document.getElementById("category-filter");
+      if (category) category.addEventListener("change", event => { categoryFilter = event.target.value; render(); });
+      const salesDate = document.getElementById("sales-date");
+      if (salesDate) salesDate.addEventListener("change", event => { selectedSalesDate = event.target.value || localDateKey(new Date()); render(); });
+      const businessNameInput = document.getElementById("business-name");
+      if (businessNameInput) businessNameInput.addEventListener("change", async event => {
+        businessName = event.target.value.trim();
+        localStorage.setItem("kyobe-business-name", JSON.stringify(businessName));
+        event.target.value = businessName;
+        if (serverApiAvailable && !(await save())) notify("Business name saved on this device, but server sync failed. Check the connection and sign in again.");
+      });
+    }
+    function saleProductOptions(selectedId = "") {
+      return `<option value="">Select produce</option>${products.map(item => `<option value="${escapeAttr(item.id)}"${item.id === selectedId ? " selected" : ""}${Number(item.stock) <= 0 ? " disabled" : ""}>${escapeHtml(item.name)} · ${Number(item.stock) > 0 ? `${number(item.stock)} ${escapeHtml(item.unit)} available` : "Out of stock"}</option>`).join("")}`;
+    }
+    function addSaleItemRow(productId = "") {
+      const row = document.createElement("div");
+      row.className = "sale-item-row";
+      row.innerHTML = `<label class="field"><span class="field-label">Produce</span><select data-item-product required>${saleProductOptions(productId)}</select></label><label class="field"><span class="field-label" data-item-quantity-label>Quantity sold</span><input data-item-quantity type="number" min="0.01" step="0.01" placeholder="Select produce" required><span class="product-meta" data-item-help>Choose a product and enter the quantity.</span></label><label class="field"><span class="field-label" data-item-price-label>Price per unit (UGX)</span><input data-item-price type="number" min="0" step="100" placeholder="0" required></label><button class="sale-line-remove" type="button" data-remove-sale-item>Remove product</button>`;
+      document.getElementById("sale-items").append(row);
+      const select = row.querySelector("[data-item-product]");
+      if (productId) select.value = productId;
+      updateSaleItemRow(row);
+      updateSalePaymentDefault();
+    }
+    function updateSaleItemRow(row) {
+      const selected = products.find(item => item.id === row.querySelector("[data-item-product]").value);
+      const isPiece = selected?.unit === "piece";
+      const quantityInput = row.querySelector("[data-item-quantity]");
+      const priceInput = row.querySelector("[data-item-price]");
+      if (selected) {
+        priceInput.value = String(isPiece ? Number(selected.price) / PIECE_WEIGHT_KG : selected.price);
+        priceInput.step = isPiece ? "1" : "100";
+        quantityInput.min = isPiece || selected.unit !== "kg" ? "0.01" : "0.1";
+        quantityInput.step = isPiece || selected.unit !== "kg" ? "0.01" : "0.1";
+        quantityInput.max = Number(selected.stock) * (isPiece ? PIECE_WEIGHT_KG : 1);
+        quantityInput.placeholder = isPiece ? `Up to ${number(quantityInput.max)} kg` : `Up to ${number(selected.stock)} ${selected.unit}`;
+        row.querySelector("[data-item-quantity-label]").textContent = isPiece ? "Quantity sold (kg)" : `Quantity sold (${selected.unit})`;
+        row.querySelector("[data-item-price-label]").textContent = isPiece ? "Price per kg (UGX)" : `Price per ${selected.unit} (UGX)`;
+        row.querySelector("[data-item-help]").textContent = isPiece ? `One piece is ${PIECE_WEIGHT_KG} kg.` : `${number(selected.stock)} ${selected.unit} available.`;
+      } else {
+        priceInput.value = "";
+        quantityInput.value = "";
+        quantityInput.removeAttribute("max");
+        quantityInput.placeholder = "Select produce";
+        row.querySelector("[data-item-quantity-label]").textContent = "Quantity sold";
+        row.querySelector("[data-item-price-label]").textContent = "Price per unit (UGX)";
+        row.querySelector("[data-item-help]").textContent = "Choose a product and enter the quantity.";
+      }
+    }
+    function updateSalePaymentDefault() {
+      const total = [...document.querySelectorAll("#sale-items .sale-item-row")].reduce((sum, row) => sum + (Number(row.querySelector("[data-item-quantity]").value) || 0) * (Number(row.querySelector("[data-item-price]").value) || 0), 0);
+      document.getElementById("sale-total-preview").textContent = money(total);
+      document.getElementById("sale-cash-paid").max = total;
+      if (salePaymentEdited) return;
+      const saleType = document.getElementById("sale-type").value;
+      document.getElementById("sale-cash-paid").value = saleType === "Credit" ? "0" : String(total);
+    }
+    function openSaleDialog(productId = "") {
+      document.getElementById("sale-form").reset();
+      salePaymentEdited = false;
+      document.getElementById("sale-items").innerHTML = "";
+      addSaleItemRow(productId);
+      document.getElementById("sale-dialog").showModal();
+    }
+    function openSaleDateDialog(saleId) {
+      const sale = sales.find(item => item.id === saleId);
+      if (!sale) { notify("Could not find that sale."); return; }
+      const pinIsSet = Boolean(localStorage.getItem("kyobe-manager-pin"));
+      const confirmField = document.getElementById("manager-pin-confirm-field");
+      document.getElementById("sale-date-title").textContent = pinIsSet ? "Correct sale date" : "Set manager PIN";
+      document.getElementById("sale-date-description").textContent = pinIsSet ? "Enter the manager PIN to change this sale date." : "Create a PIN to restrict sale-date corrections to the store manager.";
+      document.getElementById("sale-date-submit").textContent = pinIsSet ? "Save correction" : "Set PIN and save correction";
+      confirmField.hidden = pinIsSet;
+      document.getElementById("manager-pin-confirm").required = !pinIsSet;
+      document.getElementById("sale-corrected-date").value = localDateKey(sale.date);
+      document.getElementById("sale-date-form").dataset.saleId = saleId;
+      document.getElementById("sale-date-form").reset();
+      document.getElementById("sale-corrected-date").value = localDateKey(sale.date);
+      document.getElementById("sale-date-dialog").showModal();
+    }
+    function notify(message) {
+      document.querySelector(".toast")?.remove();
+      const toast = document.createElement("div"); toast.className = "toast"; toast.setAttribute("role", "status"); toast.textContent = message; document.body.append(toast);
+      setTimeout(() => toast.remove(), 2800);
+    }
+    function openReceiptDialog(saleId) {
+      const sale = sales.find(item => item.id === saleId);
+      if (!sale) { notify("Could not find that sale."); return; }
+      const transactionId = sale.transactionId || sale.id;
+      const transactionSales = sales.filter(item => (item.transactionId || item.id) === transactionId);
+      const date = dateLabel(sale.date);
+      const businessTitle = businessName.trim() || "Kyobe General Stores";
+      const total = transactionSales.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
+      const cashPaid = Math.min(total, transactionSales.reduce((sum, item) => sum + Math.max(0, Number(item.cashPaid ?? ((item.saleType || "Debit") === "Credit" ? 0 : item.total)) || 0), 0));
+      const balance = Math.max(0, total - cashPaid);
+      const itemRows = transactionSales.map(item => `<tr><td>${escapeHtml(item.productName)}</td><td>${number(item.quantity)} ${escapeHtml(item.unit)}</td><td>${money(item.price)}</td><td>${money(item.total)}</td></tr>`).join("");
+      document.getElementById("receipt-content").innerHTML = `<header class="receipt-heading"><h2 id="receipt-business-name">${escapeHtml(businessTitle)}</h2><p>Customer receipt</p></header><div class="receipt-meta"><div>Receipt #: <strong>${escapeHtml(transactionId.slice(0, 8).toUpperCase())}</strong></div><div>Date: <strong>${escapeHtml(date)} · ${escapeHtml(timeLabel(sale.date))}</strong></div><div>Customer: <strong>${escapeHtml(sale.customerName || "Walk-in")}</strong></div><div>Sale type: <strong>${escapeHtml(sale.saleType || "Debit")}</strong></div></div><table class="receipt-items"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead><tbody>${itemRows}</tbody></table><div class="receipt-total"><span>Total</span><span>${money(total)}</span></div><div class="receipt-meta"><div>Cash paid: <strong>${money(cashPaid)}</strong></div><div>Balance remaining: <strong>${money(balance)}</strong></div></div><p class="receipt-thanks">Thank you for your business!</p>`;
+      document.getElementById("receipt-dialog").showModal();
+    }
+    document.addEventListener("click", async event => {
+      const nav = event.target.closest("[data-view]");
+      if (nav) { currentView = nav.dataset.view; searchTerm = ""; categoryFilter = "All categories"; render(); }
+      const exporter = event.target.closest("[data-export]");
+      if (exporter) {
+        if (exporter.dataset.export === "inventory") exportInventory();
+        if (exporter.dataset.export === "sales") exportSales();
+      }
+      const go = event.target.closest("[data-go]");
+      if (go) { currentView = go.dataset.go; render(); }
+      if (event.target.closest("[data-today-sales]")) { selectedSalesDate = localDateKey(new Date()); render(); }
+      const opener = event.target.closest("[data-open]");
+      if (opener) { if (opener.dataset.open === "sale-dialog") openSaleDialog(); else document.getElementById(opener.dataset.open).showModal(); }
+      const closer = event.target.closest("[data-close]");
+      if (closer) document.getElementById(closer.dataset.close).close();
+      const sell = event.target.closest("[data-sell]");
+      if (sell) openSaleDialog(sell.dataset.sell);
+      if (event.target.closest("#add-sale-item")) addSaleItemRow();
+      const removeSaleItem = event.target.closest("[data-remove-sale-item]");
+      if (removeSaleItem) {
+        const rows = document.querySelectorAll("#sale-items .sale-item-row");
+        if (rows.length === 1) { notify("A sale must include at least one product."); return; }
+        removeSaleItem.closest(".sale-item-row").remove();
+        updateSalePaymentDefault();
+      }
+      const editSale = event.target.closest("[data-edit-sale]");
+      if (editSale) openSaleDateDialog(editSale.dataset.editSale);
+      const receiptButton = event.target.closest("[data-receipt]");
+      if (receiptButton) openReceiptDialog(receiptButton.dataset.receipt);
+      if (event.target.closest("#print-receipt")) window.print();
+      const deleteSaleButton = event.target.closest("[data-delete-sale]");
+      if (deleteSaleButton) {
+        const sale = sales.find(item => item.id === deleteSaleButton.dataset.deleteSale);
+        if (sale && confirm(`Delete the ${sale.productName} sale for ${sale.customerName || "Walk-in"}? The sold quantity will be returned to stock.`)) {
+          const product = products.find(item => item.id === sale.productId);
+          if (product) product.stock = Number(product.stock) + Number(sale.stockQuantity ?? sale.quantity);
+          sales = sales.filter(item => item.id !== sale.id);
+          render(); await saveWithNotice("Sale deleted and stock returned to inventory.");
+        }
+      }
+      const restock = event.target.closest("[data-restock]");
+      if (restock) {
+        const item = products.find(product => product.id === restock.dataset.restock);
+        const amount = Number(prompt(`How many ${item.unit} of ${item.name} are being added?`, "10"));
+        if (Number.isFinite(amount) && amount > 0) { item.stock = Number(item.stock) + amount; render(); await saveWithNotice(`${item.name} stock updated.`); }
+      }
+    });
+    document.getElementById("product-form").addEventListener("submit", async event => {
+      event.preventDefault();
+      const data = new FormData(event.currentTarget);
+      const name = String(data.get("name")).trim();
+      const emoji = data.get("category") === "Fruits" ? "🍎" : data.get("category") === "Staples" ? "🌾" : "🥬";
+      products.push({ id: crypto.randomUUID(), name, category: data.get("category"), unit: data.get("unit"), stock: Number(data.get("stock")), minimum: Number(data.get("minimum")), cost: Number(data.get("cost")), price: Number(data.get("price")), emoji });
+      event.currentTarget.reset(); document.getElementById("product-dialog").close(); currentView = "inventory"; render(); await saveWithNotice(`${name} added to inventory.`);
+    });
+    document.getElementById("sale-form").addEventListener("submit", async event => {
+      event.preventDefault();
+      const data = new FormData(event.currentTarget);
+      const cashPaid = Number(data.get("cashPaid"));
+      const saleType = String(data.get("saleType") || "Debit");
+      const lineItems = [...document.querySelectorAll("#sale-items .sale-item-row")].map(row => {
+        const item = products.find(product => product.id === row.querySelector("[data-item-product]").value);
+        const quantity = Number(row.querySelector("[data-item-quantity]").value);
+        const price = Number(row.querySelector("[data-item-price]").value);
+        const isPiece = item?.unit === "piece";
+        return { item, quantity, price, stockQuantity: isPiece ? quantity / PIECE_WEIGHT_KG : quantity, total: quantity * price, isPiece };
+      });
+      const total = lineItems.reduce((sum, line) => sum + line.total, 0);
+      const stockByProduct = new Map();
+      lineItems.forEach(line => { if (line.item) stockByProduct.set(line.item.id, (stockByProduct.get(line.item.id) || 0) + line.stockQuantity); });
+      const invalidLine = lineItems.some(line => !line.item || !Number.isFinite(line.quantity) || line.quantity <= 0 || !Number.isFinite(line.price) || line.price < 0 || !Number.isFinite(line.total));
+      const insufficientStock = [...stockByProduct].some(([productId, quantity]) => quantity > Number(products.find(item => item.id === productId).stock));
+      if (invalidLine || insufficientStock || !Number.isFinite(cashPaid) || cashPaid < 0 || cashPaid > total) { notify("Check each product, quantity, price, and cash paid; quantities must be within available stock."); return; }
+      const transactionId = crypto.randomUUID();
+      const customerName = String(data.get("customerName") || "").trim() || "Walk-in";
+      const date = new Date().toISOString();
+      let remainingPaid = cashPaid;
+      lineItems.forEach(line => {
+        const itemCashPaid = Math.min(line.total, remainingPaid);
+        remainingPaid -= itemCashPaid;
+        sales.push({ id: crypto.randomUUID(), transactionId, productId: line.item.id, productName: line.item.name, customerName, saleType, unit: line.isPiece ? "kg" : line.item.unit, emoji: line.item.emoji, quantity: line.quantity, stockQuantity: line.stockQuantity, price: line.price, total: line.total, cashPaid: itemCashPaid, date });
+        line.item.stock = Number(line.item.stock) - line.stockQuantity;
+      });
+      document.getElementById("sale-dialog").close(); render(); await saveWithNotice(`Sale recorded as ${saleType} and stock updated.`);
+    });
+    document.getElementById("sale-date-form").addEventListener("submit", async event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const data = new FormData(form);
+      const pin = String(data.get("pin") || "");
+      const storedPin = localStorage.getItem("kyobe-manager-pin");
+      if (storedPin) {
+        let pinRecord;
+        try { pinRecord = JSON.parse(storedPin); }
+        catch { notify("Manager PIN data is invalid. Ask the manager to reset it."); return; }
+        if (!pinRecord.salt || !pinRecord.hash || await managerPinHash(pin, pinRecord.salt) !== pinRecord.hash) { notify("Incorrect manager PIN. Sale date was not changed."); return; }
+      } else {
+        const confirmation = String(data.get("pinConfirm") || "");
+        if (pin.length < 4 || pin.length > 12) { notify("Manager PIN must be 4 to 12 characters."); return; }
+        if (pin !== confirmation) { notify("PIN confirmation does not match."); return; }
+        const salt = Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, "0")).join("");
+        const hash = await managerPinHash(pin, salt);
+        localStorage.setItem("kyobe-manager-pin", JSON.stringify({ salt, hash }));
+      }
+      const sale = sales.find(item => item.id === form.dataset.saleId);
+      if (!sale) { notify("Could not find that sale."); return; }
+      const correctedDate = new Date(`${data.get("date")}T00:00:00`);
+      if (Number.isNaN(correctedDate.getTime())) { notify("Enter a valid sale date."); return; }
+      const originalDate = new Date(sale.date);
+      correctedDate.setHours(originalDate.getHours(), originalDate.getMinutes(), originalDate.getSeconds(), originalDate.getMilliseconds());
+      sale.date = correctedDate.toISOString();
+      document.getElementById("sale-date-dialog").close(); render(); await saveWithNotice("Sale date corrected.");
+    });
+    document.getElementById("sale-items").addEventListener("change", event => {
+      const row = event.target.closest(".sale-item-row");
+      if (row && event.target.matches("[data-item-product]")) {
+        row.querySelector("[data-item-quantity]").value = "";
+        updateSaleItemRow(row);
+      }
+      updateSalePaymentDefault();
+    });
+    document.getElementById("sale-items").addEventListener("input", updateSalePaymentDefault);
+    document.getElementById("sale-type").addEventListener("change", () => { salePaymentEdited = false; updateSalePaymentDefault(); });
+    document.getElementById("sale-cash-paid").addEventListener("input", () => { salePaymentEdited = true; });
+    document.getElementById("today-label").textContent = new Date().toLocaleDateString("en-UG", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+    async function initializeStore() {
+      if (serverApiAvailable) {
+        try {
+          const response = await fetch("index.php?api=store", { headers: { "X-CSRF-Token": csrfToken } });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || "The server could not load your data.");
+          if (result.exists) {
+            products = result.products;
+            sales = result.sales.map(sale => ({ ...sale, saleType: sale.saleType || "Debit", customerName: sale.customerName || "Walk-in" }));
+            businessName = result.businessName || "Kyobe General Stores";
+            localStorage.setItem("kyobe-products", JSON.stringify(products));
+            localStorage.setItem("kyobe-sales", JSON.stringify(sales));
+            localStorage.setItem("kyobe-business-name", JSON.stringify(businessName));
+          } else if (!(await save())) {
+            notify("Your data is available on this device, but could not be copied to the server.");
+          }
+        } catch (error) {
+          console.error("Server data load failed:", error);
+          notify(`Could not load server data. Using this device’s saved data. ${error.message}`);
+        }
+      }
+      render();
+    }
+    initializeStore();
+  </script>
+</body>
+</html>
